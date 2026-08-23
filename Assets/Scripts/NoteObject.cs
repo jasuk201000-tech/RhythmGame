@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class NoteObject : MonoBehaviour
 {
+    public bool obtained = false;
 
     public bool canBePressed;
 
@@ -19,13 +20,16 @@ public class NoteObject : MonoBehaviour
         if (Input.GetKeyDown(keyToPress))
         {
             if (canBePressed)
-            { 
+            {   
                 gameObject.SetActive(false);
+                obtained = true;
+                GameManager.instance.NoteHit();
             }
         }
+     
     }
 
-    private void OnTriggeredEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.tag == "Activator")
         {
@@ -33,11 +37,17 @@ public class NoteObject : MonoBehaviour
         }
     }
 
-    private void OnTriggeredExit2D(Collider2D other)
+    private void OnTriggerExit2D(Collider2D other)
     {
         if (other.tag == "Activator")
         {
+            
             canBePressed = false;
+            if (!obtained)
+            {
+                GameManager.instance.NoteMissed();
+            }
+
         }
     }
 }
