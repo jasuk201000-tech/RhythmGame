@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,11 +12,13 @@ public class GameManager : MonoBehaviour
 
     public static GameManager instance;
 
-    public int currentScore;
+    public int currentScore; // initially set to to zero
 
-    public int scorePerNote = 100;
+    public int scorePerNote = 100; // generalised score may change later
 
-    
+    public Text scoreText;
+
+    public Text multiText;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -42,6 +45,8 @@ public class GameManager : MonoBehaviour
         Debug.Log("Hit on time");
 
         currentScore += scorePerNote;
+
+        scoreText.text = "Score:" + currentScore;
     }
 
     public void NoteMissed()
