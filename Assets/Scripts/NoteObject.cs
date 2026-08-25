@@ -10,6 +10,8 @@ public class NoteObject : MonoBehaviour
     {
         if (Input.GetKeyDown(keyToPress))
         {
+            Debug.Log("KEY DOWN: " + keyToPress + " | canBePressed=" + canBePressed);  // B
+
             if (canBePressed)
             {
                 obtained = true;
@@ -22,6 +24,7 @@ public class NoteObject : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("ENTER: " + other.name + " tag=" + other.tag);  // C
         if (other.tag != "Activator") return;
         canBePressed = true;
     }
@@ -29,12 +32,8 @@ public class NoteObject : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other.tag != "Activator") return;
-
-        Debug.Log("EXIT | obtained=" + obtained);
-
         canBePressed = false;
-
-        if (!obtained)                              // only a real miss if never hit
+        if (!obtained)
             GameManager.instance.NoteMissed();
     }
 }

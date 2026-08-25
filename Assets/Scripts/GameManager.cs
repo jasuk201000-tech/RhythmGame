@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;    
 
 public class GameManager : MonoBehaviour
 {
@@ -16,14 +17,23 @@ public class GameManager : MonoBehaviour
 
     public int scorePerNote = 100; // generalised score may change later
 
-    public Text scoreText;
+    public int Currentmultiplier;
+    public int multiplierTracker;
 
-    public Text multiText;
+    public int[] multiplierThreshold;
+
+    public TMP_Text scoreText;
+
+    public TMP_Text multiText;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         instance = this;
+
+        scoreText.text = "Score: 0"; // initial score display
+
+        Currentmultiplier = 1;
     }
 
     // Update is called once per frame
@@ -44,9 +54,23 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Hit on time");
 
-        currentScore += scorePerNote;
+        if(Currentmultiplier - 1 < multiplierThreshold.Length)
+        {
+            multiplierTracker++;
+            if (multiplierThreshold[Currentmultiplier - 1] <= multiplierTracker)
+            {
+                multiplierTracker = 0;
+                Currentmultiplier++;
+            }
+        }
+       
+        multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
+        currentScore += scorePerNote * Currentmultiplier;
 
-        scoreText.text = "Score:" + currentScore;
+
+        if (scoreText != null)
+            scoreText.text = "Score: " + currentScore;
+        // update score display and exception handling if scoreText is not assigned
     }
 
     public void NoteMissed()
