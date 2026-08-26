@@ -14,8 +14,10 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     public int currentScore; // initially set to to zero
+    public int scorePerGoodNote = 100; // generalised score may change later
 
-    public int scorePerNote = 100; // generalised score may change later
+    public int scorePerGreatNote = 125; // score for great note
+    public int scorePerPerfectNote = 150; // score for perfect note
 
     public int Currentmultiplier;
     public int multiplierTracker;
@@ -64,8 +66,8 @@ public class GameManager : MonoBehaviour
             }
         }
        
-        multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
-        currentScore += scorePerNote * Currentmultiplier;
+       // multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
+       // currentScore += scorePerNote * Currentmultiplier;
 
 
         if (scoreText != null)
@@ -73,8 +75,34 @@ public class GameManager : MonoBehaviour
         // update score display and exception handling if scoreText is not assigned
     }
 
+    public void GoodHit()
+    { 
+        currentScore += scorePerGoodNote * Currentmultiplier;
+        NoteHit();
+    }
+
+
+    public void GreatHit()
+    { 
+        currentScore += scorePerGreatNote * Currentmultiplier;  
+        NoteHit();
+    }
+
+    public void PerfectHit()
+    {
+        currentScore += scorePerPerfectNote * Currentmultiplier;
+        NoteHit();
+    }
+
+
     public void NoteMissed()
     {
         Debug.Log("Missed");
+
+        Currentmultiplier = 1;
+        multiplierTracker = 0;
+        
+
+        multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
     }
 }
