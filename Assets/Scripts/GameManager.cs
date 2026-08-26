@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     public int scorePerGreatNote = 125; // score for great note
     public int scorePerPerfectNote = 150; // score for perfect note
 
+    public int currentCombo; // current combo count
+
     public int Currentmultiplier;
     public int multiplierTracker;
 
@@ -27,6 +29,8 @@ public class GameManager : MonoBehaviour
     public TMP_Text scoreText;
 
     public TMP_Text multiText;
+
+    public TMP_Text comboText; //combo text to display the current combo count
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -79,6 +83,7 @@ public class GameManager : MonoBehaviour
     { 
         currentScore += scorePerGoodNote * Currentmultiplier;
         NoteHit();
+        currentCombo++;
     }
 
 
@@ -86,12 +91,15 @@ public class GameManager : MonoBehaviour
     { 
         currentScore += scorePerGreatNote * Currentmultiplier;  
         NoteHit();
+        currentCombo++;
     }
 
     public void PerfectHit()
     {
+        
         currentScore += scorePerPerfectNote * Currentmultiplier;
         NoteHit();
+        currentCombo++;
     }
 
 
@@ -101,7 +109,9 @@ public class GameManager : MonoBehaviour
 
         Currentmultiplier = 1;
         multiplierTracker = 0;
-        
+        comboText.text = "Combo: " + currentCombo; // reset combo display
+
+
 
         multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
     }
