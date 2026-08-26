@@ -1,53 +1,52 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;    
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-
     public AudioSource theMusic;
-
     public bool StartPlaying;
-
     public BeatScroller theBS;
 
     public static GameManager instance;
 
-    public int currentScore; // initially set to to zero
-    public int scorePerGoodNote = 100; // generalised score may change later
+    // --- Accuracy (replaces score) ---
+    // Weight each hit tier contributes toward accuracy.
+    public float perfectWeight = 1.0f;   // 100%
+    public float greatWeight = 0.66f;  // ~66%
+    public float goodWeight = 0.33f;  // ~33%
+    // Miss contributes 0.
 
-    public int scorePerGreatNote = 125; // score for great note
-    public int scorePerPerfectNote = 150; // score for perfect note
+    float earnedPoints;   // sum of weights actually earned
+    int notesPlayed;      // every judged note (hit or miss)
+    public float currentAccuracy; // 0–100, for display / other systems
 
-    public int currentCombo; // current combo count
-
+    // --- Combo & multiplier (unchanged) ---
+    public int currentCombo;
     public int Currentmultiplier;
     public int multiplierTracker;
-
     public int[] multiplierThreshold;
 
-    public TMP_Text scoreText;
-
+    public TMP_Text accuracyText;   // was scoreText
     public TMP_Text multiText;
+    public TMP_Text comboText;
 
-    public TMP_Text comboText; //combo text to display the current combo count
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
-        instance = this;
-
-        scoreText.text = "Score: 0"; // initial score display
-
-        Currentmultiplier = 1;
+        instance = this;              // Awake so instance is ready before any note
     }
 
-    // Update is called once per frame
+    void Start()
+    {
+        Currentmultiplier = 1;
+        UpdateAccuracyText();         // shows 100% (or 0 notes) at start
+    }
+
     void Update()
     {
         if (!StartPlaying)
-        { 
-            if(Input.anyKeyDown)
+        {
+            if (Input.anyKeyDown)
             {
                 StartPlaying = true;
                 theBS.HasStarted = true;
@@ -56,11 +55,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void NoteHit()
+    // Called by every successful hit; weight depends on the tier.
+    void RegisterHit(float weight)
     {
-        Debug.Log("Hit on time");
+        earnedPoints += weight;
+        notesPlayed++;
 
-        if(Currentmultiplier - 1 < multiplierThreshold.Length)
+        // combo / multiplier progression
+        currentCombo++;
+        if (Currentmultiplier - 1 < multiplierThreshold.Length)
         {
             multiplierTracker++;
             if (multiplierThreshold[Currentmultiplier - 1] <= multiplierTracker)
@@ -69,50 +72,49 @@ public class GameManager : MonoBehaviour
                 Currentmultiplier++;
             }
         }
-       
-       // multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
-       // currentScore += scorePerNote * Currentmultiplier;
 
-
-        if (scoreText != null)
-            scoreText.text = "Score: " + currentScore;
-        // update score display and exception handling if scoreText is not assigned
+        RefreshUI();
     }
 
-    public void GoodHit()
-    { 
-        currentScore += scorePerGoodNote * Currentmultiplier;
-        NoteHit();
-        currentCombo++;
-    }
-
-
-    public void GreatHit()
-    { 
-        currentScore += scorePerGreatNote * Currentmultiplier;  
-        NoteHit();
-        currentCombo++;
-    }
-
-    public void PerfectHit()
-    {
-        
-        currentScore += scorePerPerfectNote * Currentmultiplier;
-        NoteHit();
-        currentCombo++;
-    }
-
+    public void PerfectHit() { Debug.Log("Perfect"); RegisterHit(perfectWeight); }
+    public void GreatHit() { Debug.Log("Great"); RegisterHit(greatWeight); }
+    public void GoodHit() { Debug.Log("Good"); RegisterHit(goodWeight); }
 
     public void NoteMissed()
     {
         Debug.Log("Missed");
 
+        notesPlayed++;                // a miss still counts as a note played (0 earned)
+        currentCombo = 0;            // reset combo
         Currentmultiplier = 1;
         multiplierTracker = 0;
-        comboText.text = "Combo: " + currentCombo; // reset combo display
 
+        RefreshUI();
+    }
 
+    void RecalculateAccuracy()
+    {
+        // earned / maximum possible, as a percentage
+        if (notesPlayed > 0)
+            currentAccuracy = (earnedPoints / notesPlayed) * 100f;
+        else
+            currentAccuracy = 100f;   // nothing played yet
+    }
 
-        multiText.text = "Multiplier: x" + Currentmultiplier; // update multiplier display
+    void RefreshUI()
+    {
+        RecalculateAccuracy();
+        UpdateAccuracyText();
+
+        if (comboText != null)
+            comboText.text = "Combo: " + currentCombo;
+        if (multiText != null)
+            multiText.text = "Multiplier: x" + Currentmultiplier;
+    }
+
+    void UpdateAccuracyText()
+    {
+        if (accuracyText != null)
+            accuracyText.text = "Accuracy: " + currentAccuracy.ToString("F1") + "%";
     }
 }
