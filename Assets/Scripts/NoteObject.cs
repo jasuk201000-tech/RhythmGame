@@ -10,9 +10,9 @@ public class NoteObject : MonoBehaviour
 
     // Hit line and thresholds
     public float hitLineY = -3.4f;
-    public float perfectThreshold = 0.08f;  // most defined threshold
-    public float greatThreshold = 0.15f;    // further outside
-    public float goodThreshold = 0.25f;     // last boundary until not counted
+    public float perfectThreshold = 0.15f;  // most defined threshold
+    public float greatThreshold = 0.25f;    // further outside
+    public float goodThreshold = 0.35f;     // last boundary until not counted
 
     // fixed area for timing
     public float effectX = 0f;              
@@ -56,6 +56,7 @@ public class NoteObject : MonoBehaviour
                     GameManager.instance.NoteMissed();
                     Instantiate(missEffect, effectPos, missEffect.transform.rotation);
                 }
+                
 
                 gameObject.SetActive(false);
             }
@@ -74,5 +75,6 @@ public class NoteObject : MonoBehaviour
         canBePressed = false;
         if (!obtained)
             GameManager.instance.NoteMissed();
+
     }
 }

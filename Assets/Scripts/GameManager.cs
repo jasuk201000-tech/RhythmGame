@@ -10,36 +10,47 @@ public class GameManager : MonoBehaviour
 
     public static GameManager instance;
 
-    // --- Accuracy (replaces score) ---
-    // Weight each hit tier contributes toward accuracy.
+    // accuracy weighting (similar to osu or maimai)
     public float perfectWeight = 1.0f;   // 100%
     public float greatWeight = 0.66f;  // ~66%
     public float goodWeight = 0.33f;  // ~33%
-    // Miss contributes 0.
 
     float earnedPoints;   // sum of weights actually earned
     int notesPlayed;      // every judged note (hit or miss)
-    public float currentAccuracy; // 0–100, for display / other systems
+    public float currentAccuracy;
 
-    // --- Combo & multiplier (unchanged) ---
+    // combo and multiplier settings
     public int currentCombo;
     public int Currentmultiplier;
     public int multiplierTracker;
     public int[] multiplierThreshold;
 
-    public TMP_Text accuracyText;   // was scoreText
+    public TMP_Text accuracyText;
     public TMP_Text multiText;
     public TMP_Text comboText;
 
+    // note tally
+    public int TotalNotes;
+    public int goodHits;
+    public int greatHits;
+    public int perfectHits;
+    public int missHits;
+
+   
+
+    bool songFinished;
+
     void Awake()
     {
-        instance = this;              // Awake so instance is ready before any note
+        instance = this;
     }
 
     void Start()
     {
         Currentmultiplier = 1;
-        UpdateAccuracyText();         // shows 100% (or 0 notes) at start
+        UpdateAccuracyText();
+
+        TotalNotes = FindObjectsByType<NoteObject>(FindObjectsInactive.Include).Length;
     }
 
     void Update()
@@ -55,13 +66,13 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Called by every successful hit; weight depends on the tier.
+    // called by every successful hit; weight depends on the tier
     void RegisterHit(float weight)
     {
         earnedPoints += weight;
         notesPlayed++;
 
-        // combo / multiplier progression
+        // combo / multiplier progression (combo owned here, once)
         currentCombo++;
         if (Currentmultiplier - 1 < multiplierThreshold.Length)
         {
@@ -74,31 +85,51 @@ public class GameManager : MonoBehaviour
         }
 
         RefreshUI();
+        
     }
 
-    public void PerfectHit() { Debug.Log("Perfect"); RegisterHit(perfectWeight); }
-    public void GreatHit() { Debug.Log("Great"); RegisterHit(greatWeight); }
-    public void GoodHit() { Debug.Log("Good"); RegisterHit(goodWeight); }
+    public void PerfectHit()
+    {
+        Debug.Log("Perfect");
+        perfectHits++;
+        RegisterHit(perfectWeight);
+    }
+
+    public void GreatHit()
+    {
+        Debug.Log("Great");
+        greatHits++;
+        RegisterHit(greatWeight);
+    }
+
+    public void GoodHit()
+    {
+        Debug.Log("Good");
+        goodHits++;
+        RegisterHit(goodWeight);
+    }
 
     public void NoteMissed()
     {
         Debug.Log("Missed");
 
-        notesPlayed++;                // a miss still counts as a note played (0 earned)
-        currentCombo = 0;            // reset combo
+        missHits++;
+        notesPlayed++;
+        currentCombo = 0;          // reset combo on a miss
         Currentmultiplier = 1;
         multiplierTracker = 0;
 
         RefreshUI();
+        
     }
 
     void RecalculateAccuracy()
     {
-        // earned / maximum possible, as a percentage
+        // earned / notes played so far, as a percentage (live display)
         if (notesPlayed > 0)
             currentAccuracy = (earnedPoints / notesPlayed) * 100f;
         else
-            currentAccuracy = 100f;   // nothing played yet
+            currentAccuracy = 100f;
     }
 
     void RefreshUI()
