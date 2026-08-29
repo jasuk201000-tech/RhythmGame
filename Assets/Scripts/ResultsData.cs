@@ -8,4 +8,5 @@ public static class ResultsData
     public static int misses;
     public static float accuracy;
     public static int longestCombo;
+    public static bool hasPassed;  // indicates that the player has passed the song (accuracy >= 50%)
 }

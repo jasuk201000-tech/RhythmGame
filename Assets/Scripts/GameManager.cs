@@ -1,42 +1,54 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public AudioSource theMusic;
-    public bool StartPlaying;
-    public BeatScroller theBS;
-
     public static GameManager instance;
 
-    // accuracy weighting (similar to osu or maimai)
-    public float perfectWeight = 1.0f;   // 100%
-    public float greatWeight = 0.66f;  // ~66%
-    public float goodWeight = 0.33f;  // ~33%
+    // music
+    public AudioSource theMusic;
+    public BeatScroller theBS;
+    public bool StartPlaying;
 
-    float earnedPoints;   // sum of weights actually earned
-    int notesPlayed;      // every judged note (hit or miss)
+    // accuracy weighting similar to osu and maimai
+    public float perfectWeight = 1.0f;
+    public float greatWeight = 0.66f;
+    public float goodWeight = 0.33f;
+
+    float earnedPoints;
+    int notesPlayed;
     public float currentAccuracy;
 
-    // combo and multiplier settings
+    // combo and multiplier manager
     public int currentCombo;
+    public int longestCombo;
     public int Currentmultiplier;
     public int multiplierTracker;
     public int[] multiplierThreshold;
 
+    // UI text
     public TMP_Text accuracyText;
     public TMP_Text multiText;
     public TMP_Text comboText;
 
-    // note tally
+   // tallying notes
     public int TotalNotes;
     public int goodHits;
     public int greatHits;
     public int perfectHits;
     public int missHits;
 
-   
+    // pass threshold
+    public float passThreshold = 50f;   // accuracy % needed to pass
+
+    // pause panel
+    public GameObject pausePanel;       
+    public bool isPaused;
+
+    // string for scene switching
+    public string resultsSceneName = "Ranking Display";
+    public string gameplaySceneName = "Round1";
 
     bool songFinished;
 
@@ -49,7 +61,6 @@ public class GameManager : MonoBehaviour
     {
         Currentmultiplier = 1;
         UpdateAccuracyText();
-
         TotalNotes = FindObjectsByType<NoteObject>(FindObjectsInactive.Include).Length;
     }
 
@@ -64,16 +75,26 @@ public class GameManager : MonoBehaviour
                 theMusic.Play();
             }
         }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (isPaused) ResumeGame();
+                else PauseGame();
+            }
+        }
     }
 
-    // called by every successful hit; weight depends on the tier
+    // registering hits with respective accuracy
     void RegisterHit(float weight)
     {
         earnedPoints += weight;
         notesPlayed++;
 
-        // combo / multiplier progression (combo owned here, once)
         currentCombo++;
+        if (currentCombo > longestCombo)
+            longestCombo = currentCombo;
+
         if (Currentmultiplier - 1 < multiplierThreshold.Length)
         {
             multiplierTracker++;
@@ -85,67 +106,107 @@ public class GameManager : MonoBehaviour
         }
 
         RefreshUI();
-        
+        CheckSongComplete();
     }
 
-    public void PerfectHit()
-    {
-        Debug.Log("Perfect");
-        perfectHits++;
-        RegisterHit(perfectWeight);
-    }
+    public void PerfectHit() { Debug.Log("Perfect"); perfectHits++; RegisterHit(perfectWeight); }
+    public void GreatHit() { Debug.Log("Great"); greatHits++; RegisterHit(greatWeight); }
+    public void GoodHit() { Debug.Log("Good"); goodHits++; RegisterHit(goodWeight); }
 
-    public void GreatHit()
-    {
-        Debug.Log("Great");
-        greatHits++;
-        RegisterHit(greatWeight);
-    }
-
-    public void GoodHit()
-    {
-        Debug.Log("Good");
-        goodHits++;
-        RegisterHit(goodWeight);
-    }
-
+    // note missed class
     public void NoteMissed()
     {
         Debug.Log("Missed");
-
         missHits++;
         notesPlayed++;
-        currentCombo = 0;          // reset combo on a miss
+        currentCombo = 0;
         Currentmultiplier = 1;
         multiplierTracker = 0;
 
         RefreshUI();
-        
+        CheckSongComplete();
     }
 
+    // accuracy arithmetic
     void RecalculateAccuracy()
     {
-        // earned / notes played so far, as a percentage (live display)
         if (notesPlayed > 0)
             currentAccuracy = (earnedPoints / notesPlayed) * 100f;
         else
             currentAccuracy = 100f;
     }
 
+    // UI refresh after each note
     void RefreshUI()
     {
         RecalculateAccuracy();
         UpdateAccuracyText();
 
-        if (comboText != null)
-            comboText.text = "Combo: " + currentCombo;
-        if (multiText != null)
-            multiText.text = "Multiplier: x" + Currentmultiplier;
+        if (comboText != null) comboText.text = "Combo: " + currentCombo;
+        if (multiText != null) multiText.text = "Multiplier: x" + Currentmultiplier;
     }
 
+    // updates accuracy each time a note is hit or missed
     void UpdateAccuracyText()
     {
         if (accuracyText != null)
             accuracyText.text = "Accuracy: " + currentAccuracy.ToString("F1") + "%";
+    }
+
+    // checks if song has complete through the number of notes played and total notes in the song
+    void CheckSongComplete()
+    {
+        if (songFinished) return;
+        if (notesPlayed >= TotalNotes && TotalNotes > 0)
+        {
+            songFinished = true;
+            SongComplete();
+        }
+    }
+
+    void SongComplete()
+    {
+        ResultsData.perfects = perfectHits;
+        ResultsData.greats = greatHits;
+        ResultsData.goods = goodHits;
+        ResultsData.misses = missHits;
+        ResultsData.accuracy = currentAccuracy;
+        ResultsData.longestCombo = longestCombo;
+        ResultsData.hasPassed = currentAccuracy >= passThreshold;
+
+        Time.timeScale = 1f;   
+        SceneManager.LoadScene(resultsSceneName);
+    }
+
+    // pausegame method
+    public void PauseGame()
+    {
+        Debug.Log("PauseGame called | pausePanel is " + (pausePanel == null ? "NULL" : pausePanel.name));
+        isPaused = true;
+        Time.timeScale = 0f;
+        if (theMusic != null) theMusic.Pause();
+        if (pausePanel != null) pausePanel.SetActive(true);
+    }
+
+    public void ResumeGame()
+    {
+
+        isPaused = false;
+        Time.timeScale = 1f;
+        if (theMusic != null) theMusic.UnPause();
+        if (pausePanel != null) pausePanel.SetActive(false);
+    }
+
+    public void RestartSong()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    public void QuitToMenu()
+    {
+        Time.timeScale = 1f;
+        Application.Quit();   // this will change once linked the group project (RPG)
+        
     }
 }

@@ -8,15 +8,15 @@ public class NoteObject : MonoBehaviour
 
     public GameObject goodEffect, greatEffect, perfectEffect, missEffect;
 
-    // Hit line and thresholds
+    // hitline thresholds
     public float hitLineY = -3.4f;
-    public float perfectThreshold = 0.15f;  // most defined threshold
-    public float greatThreshold = 0.25f;    // further outside
-    public float goodThreshold = 0.35f;     // last boundary until not counted
+    public float perfectThreshold = 0.15f;
+    public float greatThreshold = 0.25f;
+    public float goodThreshold = 0.35f;
 
-    // fixed area for timing
-    public float effectX = 0f;              
-    public float effectY = -3.9f;           
+    // effect spawn point
+    public float effectX = 0f;
+    public float effectY = -3.6f;
 
     void Update()
     {
@@ -28,35 +28,28 @@ public class NoteObject : MonoBehaviour
                 canBePressed = false;
 
                 float distance = Mathf.Abs(transform.position.y - hitLineY);
-
-                // one shared, centred position for every lane's effect
                 Vector3 effectPos = new Vector3(effectX, effectY, 0f);
 
                 if (distance < perfectThreshold)
                 {
                     GameManager.instance.PerfectHit();
-                    Debug.Log("Perfect Hit");
                     Instantiate(perfectEffect, effectPos, perfectEffect.transform.rotation);
                 }
                 else if (distance < greatThreshold)
                 {
                     GameManager.instance.GreatHit();
-                    Debug.Log("Great Hit");
                     Instantiate(greatEffect, effectPos, greatEffect.transform.rotation);
                 }
                 else if (distance < goodThreshold)
                 {
                     GameManager.instance.GoodHit();
-                    Debug.Log("Good Hit");
                     Instantiate(goodEffect, effectPos, goodEffect.transform.rotation);
                 }
                 else
                 {
-                    Debug.Log("Missed Note");
                     GameManager.instance.NoteMissed();
                     Instantiate(missEffect, effectPos, missEffect.transform.rotation);
                 }
-                
 
                 gameObject.SetActive(false);
             }
@@ -75,6 +68,5 @@ public class NoteObject : MonoBehaviour
         canBePressed = false;
         if (!obtained)
             GameManager.instance.NoteMissed();
-
     }
 }
