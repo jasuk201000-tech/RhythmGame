@@ -181,7 +181,6 @@ public class GameManager : MonoBehaviour
     // pausegame method
     public void PauseGame()
     {
-        Debug.Log("PauseGame called | pausePanel is " + (pausePanel == null ? "NULL" : pausePanel.name));
         isPaused = true;
         Time.timeScale = 0f;
         if (theMusic != null) theMusic.Pause();
@@ -208,5 +207,26 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         Application.Quit();   // this will change once linked the group project (RPG)
         
+    }
+
+    // full combo and all perfect methods for testing purposes
+    public void FullCombo()
+    {
+        currentCombo = TotalNotes;
+        longestCombo = TotalNotes;
+        RefreshUI();
+    }
+
+    public void AllPerfect()
+    {
+        perfectHits = TotalNotes;
+        greatHits = 0;
+        goodHits = 0;
+        missHits = 0;
+        earnedPoints = perfectWeight * TotalNotes;
+        notesPlayed = TotalNotes;
+        currentCombo = TotalNotes;
+        longestCombo = TotalNotes;
+        RefreshUI();
     }
 }

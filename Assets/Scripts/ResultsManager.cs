@@ -19,13 +19,14 @@ public class ResultsManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        
         perfectDisplay.text = "Perfects: " + ResultsData.perfects;
         greatDisplay.text = "Greats: " + ResultsData.greats;
         goodDisplay.text = "Goods: " + ResultsData.goods;
         missDisplay.text = "Misses: " + ResultsData.misses;
         accuracyDisplay.text = "Accuracy: " + ResultsData.accuracy.ToString("F1") + "%";
         longestComboDisplay.text = "Longest combo: " + ResultsData.longestCombo;
-        rankingDisplay.text = GetRank(ResultsData.accuracy);
+        rankingDisplay.text = "Final Rank: " + GetRank(ResultsData.accuracy);
 
         if (passFailDisplay != null)
             passFailDisplay.text = ResultsData.hasPassed ? "PASS" : "FAIL";
@@ -41,6 +42,11 @@ public class ResultsManager : MonoBehaviour
         return "F";
     }
 
+    public void CheckForAP()
+    { 
+        
+    }
+
     public void RetrySong()
     {
         SceneManager.LoadScene(gameplaySceneName);
@@ -49,6 +55,6 @@ public class ResultsManager : MonoBehaviour
     public void QuitGame()
     {
         Application.Quit();
-        // or SceneManager.LoadScene("MainMenu");
+      // change this to the RPG world when done
     }
 }
