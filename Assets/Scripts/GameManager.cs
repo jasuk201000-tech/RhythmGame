@@ -1,17 +1,18 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.IO;
 using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
-    // music
+   // music and scroll
     public AudioSource theMusic;
     public BeatScroller theBS;
     public bool StartPlaying;
 
-    // accuracy weighting similar to osu and maimai
+    // accuracy weightings (that effect accuracy)
     public float perfectWeight = 1.0f;
     public float greatWeight = 0.66f;
     public float goodWeight = 0.33f;
@@ -20,33 +21,33 @@ public class GameManager : MonoBehaviour
     int notesPlayed;
     public float currentAccuracy;
 
-    // combo and multiplier manager
+    // combo and multiplier
     public int currentCombo;
     public int longestCombo;
     public int Currentmultiplier;
     public int multiplierTracker;
     public int[] multiplierThreshold;
 
-    // UI text
+    // UI elements
     public TMP_Text accuracyText;
     public TMP_Text multiText;
     public TMP_Text comboText;
 
-   // tallying notes
+    // internal note tally
     public int TotalNotes;
     public int goodHits;
     public int greatHits;
     public int perfectHits;
     public int missHits;
 
-    // pass threshold
-    public float passThreshold = 50f;   // accuracy % needed to pass
+    // pass threshold for the song
+    public float passThreshold = 50f;
 
-    // pause panel
-    public GameObject pausePanel;       
+    // pause menu
+    public GameObject pausePanel;
     public bool isPaused;
 
-    // string for scene switching
+    //scenes
     public string resultsSceneName = "Ranking Display";
     public string gameplaySceneName = "Round1";
 
@@ -85,7 +86,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // registering hits with respective accuracy
     void RegisterHit(float weight)
     {
         earnedPoints += weight;
@@ -109,14 +109,12 @@ public class GameManager : MonoBehaviour
         CheckSongComplete();
     }
 
-    public void PerfectHit() { Debug.Log("Perfect"); perfectHits++; RegisterHit(perfectWeight); }
-    public void GreatHit() { Debug.Log("Great"); greatHits++; RegisterHit(greatWeight); }
-    public void GoodHit() { Debug.Log("Good"); goodHits++; RegisterHit(goodWeight); }
+    public void PerfectHit() { perfectHits++; RegisterHit(perfectWeight); }
+    public void GreatHit() { greatHits++; RegisterHit(greatWeight); }
+    public void GoodHit() { goodHits++; RegisterHit(goodWeight); }
 
-    // note missed class
     public void NoteMissed()
     {
-        Debug.Log("Missed");
         missHits++;
         notesPlayed++;
         currentCombo = 0;
@@ -127,7 +125,6 @@ public class GameManager : MonoBehaviour
         CheckSongComplete();
     }
 
-    // accuracy arithmetic
     void RecalculateAccuracy()
     {
         if (notesPlayed > 0)
@@ -136,24 +133,20 @@ public class GameManager : MonoBehaviour
             currentAccuracy = 100f;
     }
 
-    // UI refresh after each note
     void RefreshUI()
     {
         RecalculateAccuracy();
         UpdateAccuracyText();
-
         if (comboText != null) comboText.text = "Combo: " + currentCombo;
         if (multiText != null) multiText.text = "Multiplier: x" + Currentmultiplier;
     }
 
-    // updates accuracy each time a note is hit or missed
     void UpdateAccuracyText()
     {
         if (accuracyText != null)
             accuracyText.text = "Accuracy: " + currentAccuracy.ToString("F1") + "%";
     }
 
-    // checks if song has complete through the number of notes played and total notes in the song
     void CheckSongComplete()
     {
         if (songFinished) return;
@@ -166,19 +159,31 @@ public class GameManager : MonoBehaviour
 
     void SongComplete()
     {
-        ResultsData.perfects = perfectHits;
-        ResultsData.greats = greatHits;
-        ResultsData.goods = goodHits;
-        ResultsData.misses = missHits;
-        ResultsData.accuracy = currentAccuracy;
-        ResultsData.longestCombo = longestCombo;
-        ResultsData.hasPassed = currentAccuracy >= passThreshold;
-
-        Time.timeScale = 1f;   
+        SaveScoreToCSV();
+        Time.timeScale = 1f;
         SceneManager.LoadScene(resultsSceneName);
     }
 
-    // pausegame method
+    void SaveScoreToCSV()
+    {
+        string path = Path.Combine(Application.persistentDataPath, "scores.csv");
+
+        
+        if (!File.Exists(path))
+            File.WriteAllText(path,
+                "Accuracy,Perfects,Greats,Goods,Misses,LongestCombo,Result\n");
+
+        string result = currentAccuracy >= passThreshold ? "PASS" : "FAIL";
+        string row = currentAccuracy.ToString("F1") + "," +
+                     perfectHits + "," + greatHits + "," + goodHits + "," +
+                     missHits + "," + longestCombo + "," + result + "\n";
+
+        File.AppendAllText(path, row);
+
+        Debug.Log("Score saved to: " + path);   // test case
+    }
+
+    // pause menu
     public void PauseGame()
     {
         isPaused = true;
@@ -189,7 +194,6 @@ public class GameManager : MonoBehaviour
 
     public void ResumeGame()
     {
-
         isPaused = false;
         Time.timeScale = 1f;
         if (theMusic != null) theMusic.UnPause();
@@ -205,28 +209,6 @@ public class GameManager : MonoBehaviour
     public void QuitToMenu()
     {
         Time.timeScale = 1f;
-        Application.Quit();   // this will change once linked the group project (RPG)
-        
-    }
-
-    // full combo and all perfect methods for testing purposes
-    public void FullCombo()
-    {
-        currentCombo = TotalNotes;
-        longestCombo = TotalNotes;
-        RefreshUI();
-    }
-
-    public void AllPerfect()
-    {
-        perfectHits = TotalNotes;
-        greatHits = 0;
-        goodHits = 0;
-        missHits = 0;
-        earnedPoints = perfectWeight * TotalNotes;
-        notesPlayed = TotalNotes;
-        currentCombo = TotalNotes;
-        longestCombo = TotalNotes;
-        RefreshUI();
+        Application.Quit();
     }
 }

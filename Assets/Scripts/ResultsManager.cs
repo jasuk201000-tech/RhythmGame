@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.IO;
 using TMPro;
 
 public class ResultsManager : MonoBehaviour
@@ -18,18 +19,33 @@ public class ResultsManager : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1f;
+        LoadLatestScore();
+    }
 
-        
-        perfectDisplay.text = "Perfects: " + ResultsData.perfects;
-        greatDisplay.text = "Greats: " + ResultsData.greats;
-        goodDisplay.text = "Goods: " + ResultsData.goods;
-        missDisplay.text = "Misses: " + ResultsData.misses;
-        accuracyDisplay.text = "Accuracy: " + ResultsData.accuracy.ToString("F1") + "%";
-        longestComboDisplay.text = "Longest combo: " + ResultsData.longestCombo;
-        rankingDisplay.text = "Final Rank: " + GetRank(ResultsData.accuracy);
+    void LoadLatestScore()
+    {
+        string path = Path.Combine(Application.persistentDataPath, "scores.csv");
 
-        if (passFailDisplay != null)
-            passFailDisplay.text = ResultsData.hasPassed ? "PASS" : "FAIL";
+        if (!File.Exists(path)) return;          
+
+        string[] lines = File.ReadAllLines(path);
+        if (lines.Length < 2) return;            
+
+        string[] cols = lines[lines.Length - 1].Split(',');
+        if (cols.Length < 7) return;             
+
+        accuracyDisplay.text = "Accuracy: " + cols[0] + "%";
+        perfectDisplay.text = "Perfects: " + cols[1];
+        greatDisplay.text = "Greats: " + cols[2];
+        goodDisplay.text = "Goods: " + cols[3];
+        missDisplay.text = "Misses: " + cols[4];
+        longestComboDisplay.text = "Longest combo: " + cols[5];
+        passFailDisplay.text = cols[6];
+        // indicates which column is which in the CSV file:
+
+        // rank from the accuracy column
+        if (float.TryParse(cols[0], out float acc))
+            rankingDisplay.text = GetRank(acc);
     }
 
     string GetRank(float acc)
@@ -42,19 +58,8 @@ public class ResultsManager : MonoBehaviour
         return "F";
     }
 
-    public void CheckForAP()
-    { 
-        
-    }
-
     public void RetrySong()
     {
         SceneManager.LoadScene(gameplaySceneName);
-    }
-
-    public void QuitGame()
-    {
-        Application.Quit();
-      // change this to the RPG world when done
     }
 }
